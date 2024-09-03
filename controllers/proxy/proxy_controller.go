@@ -42,17 +42,17 @@ func (r *ProxyReconciler) Reconcile(ctx context.Context, request reconcile.Reque
 	proxyConfig.Data = make(map[string]string)
 
 	// splunkforwarder only supports http proxies, so we need to check for https
-	if proxy.Status.HTTPProxy != "" && strings.HasPrefix(proxy.Status.HTTPProxy, "http://") {
-		proxyConfig.Data["HTTP_PROXY"] = proxy.Status.HTTPProxy
+	if proxy.Spec.HTTPProxy != "" && strings.HasPrefix(proxy.Spec.HTTPProxy, "http://") {
+		proxyConfig.Data["httpProxy"] = proxy.Spec.HTTPProxy
 	}
 
 	// splunkforwarder only supports http proxies, so we need to check for https
-	if proxy.Status.HTTPSProxy != "" && strings.HasPrefix(proxy.Status.HTTPSProxy, "http://") {
-		proxyConfig.Data["HTTPS_PROXY"] = proxy.Status.HTTPSProxy
+	if proxy.Spec.HTTPSProxy != "" && strings.HasPrefix(proxy.Spec.HTTPSProxy, "http://") {
+		proxyConfig.Data["httpsProxy"] = proxy.Spec.HTTPSProxy
 	}
 
-	if len(proxyConfig.Data) > 0 && proxy.Status.NoProxy != "" {
-		proxyConfig.Data["NO_PROXY"] = proxy.Status.NoProxy
+	if len(proxyConfig.Data) > 0 && proxy.Spec.NoProxy != "" {
+		proxyConfig.Data["noProxy"] = proxy.Spec.NoProxy
 	}
 
 	// Fetch the trusted CA bundle

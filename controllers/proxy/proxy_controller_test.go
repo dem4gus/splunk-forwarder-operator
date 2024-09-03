@@ -54,7 +54,7 @@ func TestReconcileProxy_Reconcile(t *testing.T) {
 			localObjects: []runtime.Object{
 				&configv1.Proxy{
 					ObjectMeta: v1.ObjectMeta{Name: "cluster"},
-					Status:     configv1.ProxyStatus{},
+					Spec:       configv1.ProxySpec{},
 				},
 				caBundle,
 			},
@@ -65,8 +65,8 @@ func TestReconcileProxy_Reconcile(t *testing.T) {
 				request: reconcile.Request{NamespacedName: types.NamespacedName{Name: "test", Namespace: "openshift-test"}},
 			},
 			want: map[string]string{
-				"HTTP_PROXY": "http://proxy.example.com:8080",
-				"NO_PROXY":   "localhost",
+				"httpProxy": "http://proxy.example.com:8080",
+				"noProxy":   "localhost",
 			},
 			wantErr: false,
 			localObjects: []runtime.Object{
@@ -75,7 +75,7 @@ func TestReconcileProxy_Reconcile(t *testing.T) {
 				},
 				&configv1.Proxy{
 					ObjectMeta: v1.ObjectMeta{Name: "cluster"},
-					Status: configv1.ProxyStatus{
+					Spec: configv1.ProxySpec{
 						HTTPProxy: "http://proxy.example.com:8080",
 						NoProxy:   "localhost",
 					},
@@ -96,6 +96,7 @@ func TestReconcileProxy_Reconcile(t *testing.T) {
 				},
 				Data: map[string]string{},
 			}
+			ctx := context.Background()
 			tt.localObjects = append(tt.localObjects, runtime.Object(cm))
 			fakeClient := fakekubeclient.NewClientBuilder().WithScheme(scheme.Scheme).WithRuntimeObjects(tt.localObjects...).Build()
 
@@ -104,8 +105,7 @@ func TestReconcileProxy_Reconcile(t *testing.T) {
 				Scheme: scheme.Scheme,
 				Config: cm,
 			}
-
-			_, err := r.Reconcile(context.TODO(), tt.args.request)
+			_, err := r.Reconcile(ctx, tt.args.request)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProxyReconciler.Reconcile() error = %v, wantErr %v", err, tt.wantErr)
@@ -113,7 +113,7 @@ func TestReconcileProxy_Reconcile(t *testing.T) {
 			}
 
 			gotConfig := &corev1.ConfigMap{}
-			err = fakeClient.Get(context.TODO(), types.NamespacedName{Namespace: cm.Namespace, Name: cm.Name}, gotConfig)
+			err = fakeClient.Get(ctx, types.NamespacedName{Namespace: cm.Namespace, Name: cm.Name}, gotConfig)
 			if err != nil {
 				t.Errorf("got unexpected error: %v", err)
 			}

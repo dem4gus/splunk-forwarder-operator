@@ -28,7 +28,7 @@ type ProxyReconciler struct {
 }
 
 func (r *ProxyReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
-    
+
 	proxy := &configv1.Proxy{}
 	if err := r.Client.Get(ctx, config.ProxyName, proxy); err != nil {
 		return reconcile.Result{Requeue: true}, err
@@ -40,12 +40,12 @@ func (r *ProxyReconciler) Reconcile(ctx context.Context, request reconcile.Reque
 	proxyConfig.Name = config.ProxyConfigMapName
 	proxyConfig.Data = make(map[string]string)
 
-    // splunkforwarder only supports http proxies, so we need to check for https
+	// splunkforwarder only supports http proxies, so we need to check for https
 	if proxy.Status.HTTPProxy != "" && strings.HasPrefix(proxy.Status.HTTPProxy, "http://") {
 		proxyConfig.Data["HTTP_PROXY"] = proxy.Status.HTTPProxy
 	}
 
-    // splunkforwarder only supports http proxies, so we need to check for https
+	// splunkforwarder only supports http proxies, so we need to check for https
 	if proxy.Status.HTTPSProxy != "" && strings.HasPrefix(proxy.Status.HTTPSProxy, "http://") {
 		proxyConfig.Data["HTTPS_PROXY"] = proxy.Status.HTTPSProxy
 	}
@@ -57,7 +57,7 @@ func (r *ProxyReconciler) Reconcile(ctx context.Context, request reconcile.Reque
 	// Fetch the trusted CA bundle
 	trustedCa := &corev1.ConfigMap{}
 	if err := r.Client.Get(ctx, config.TrustedCABundleName, trustedCa); err != nil {
-        return reconcile.Result{Requeue: true}, err
+		return reconcile.Result{Requeue: true}, err
 	}
 
 	forwarders := &v1alpha1.SplunkForwarderList{}
@@ -86,18 +86,16 @@ func (r *ProxyReconciler) Reconcile(ctx context.Context, request reconcile.Reque
 		}
 		log.Info("Updated proxy config", "namespace", forwarder.Namespace)
 	}
-    
 
-    if err := lastErr; err != nil {
-        log.Error(err, "reconcile failed")
-        return reconcile.Result{Requeue: true}, err
+	if err := lastErr; err != nil {
+		log.Error(err, "reconcile failed")
+		return reconcile.Result{Requeue: true}, err
 
-    }
+	}
 
 	return reconcile.Result{}, lastErr
 
 }
-
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ProxyReconciler) SetupWithManager(mgr ctrl.Manager) error {

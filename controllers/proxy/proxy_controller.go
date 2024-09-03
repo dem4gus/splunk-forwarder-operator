@@ -19,7 +19,7 @@ import (
 	"github.com/openshift/splunk-forwarder-operator/config"
 )
 
-var log = logf.Log.WithName("controller_proxy")
+const controllerName = "proxy_controller"
 
 type ProxyReconciler struct {
 	Client client.Client
@@ -28,6 +28,7 @@ type ProxyReconciler struct {
 }
 
 func (r *ProxyReconciler) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
+	log := logf.Log.WithName(controllerName)
 
 	proxy := &configv1.Proxy{}
 	if err := r.Client.Get(ctx, config.ProxyName, proxy); err != nil {
@@ -99,5 +100,5 @@ func (r *ProxyReconciler) Reconcile(ctx context.Context, request reconcile.Reque
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ProxyReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).Named("cluster-proxy").For(&configv1.Proxy{}).Complete(r)
+	return ctrl.NewControllerManagedBy(mgr).Named(controllerName).For(&configv1.Proxy{}).Complete(r)
 }

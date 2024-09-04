@@ -24,7 +24,9 @@ import (
 	"github.com/openshift/splunk-forwarder-operator/pkg/kube"
 )
 
-var log = logf.Log.WithName("controller_secret")
+const controllerName = "secret_controller"
+
+var log = logf.Log.WithName(controllerName)
 
 // mySecretPredicate filters out any events not related to our Secret.
 func mySecretPredicate() predicate.Predicate {
@@ -150,6 +152,7 @@ func (r *SecretReconciler) Reconcile(ctx context.Context, request reconcile.Requ
 // SetupWithManager sets up the controller with the Manager.
 func (r *SecretReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
+		Named(controllerName).
 		For(&corev1.Secret{}).
 		WithEventFilter(mySecretPredicate()).
 		Complete(r)

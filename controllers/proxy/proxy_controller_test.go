@@ -34,21 +34,14 @@ func TestReconcileProxy_Reconcile(t *testing.T) {
 		t.Errorf("ProxyReconciler.Reconcile() error = %v", err)
 		return
 	}
-	type args struct {
-		request reconcile.Request
-	}
 	tests := []struct {
 		name         string
-		args         args
 		want         map[string]string
 		wantErr      bool
 		localObjects []runtime.Object
 	}{
 		{
-			name: "no proxy",
-			args: args{
-				request: reconcile.Request{NamespacedName: types.NamespacedName{Name: "test", Namespace: "openshift-test"}},
-			},
+			name:    "no proxy configured",
 			want:    map[string]string{},
 			wantErr: false,
 			localObjects: []runtime.Object{
@@ -60,10 +53,7 @@ func TestReconcileProxy_Reconcile(t *testing.T) {
 			},
 		},
 		{
-			name: "http proxy",
-			args: args{
-				request: reconcile.Request{NamespacedName: types.NamespacedName{Name: "test", Namespace: "openshift-test"}},
-			},
+			name: "http proxy configured on cluster",
 			want: map[string]string{
 				"httpProxy": "http://proxy.example.com:8080",
 				"noProxy":   "localhost",
@@ -105,7 +95,7 @@ func TestReconcileProxy_Reconcile(t *testing.T) {
 				Scheme: scheme.Scheme,
 				Config: cm,
 			}
-			_, err := r.Reconcile(ctx, tt.args.request)
+			_, err := r.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: "openshift-test", Name: "test"}})
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ProxyReconciler.Reconcile() error = %v, wantErr %v", err, tt.wantErr)

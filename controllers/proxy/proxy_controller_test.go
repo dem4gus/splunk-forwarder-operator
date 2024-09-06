@@ -30,10 +30,6 @@ var caBundle = &corev1.ConfigMap{
 }
 
 func TestReconcileProxy_Reconcile(t *testing.T) {
-	if err := configv1.AddToScheme(scheme.Scheme); err != nil {
-		t.Errorf("ProxyReconciler.Reconcile() error = %v", err)
-		return
-	}
 	tests := []struct {
 		name         string
 		want         map[string]string
@@ -76,9 +72,13 @@ func TestReconcileProxy_Reconcile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if err := configv1.AddToScheme(scheme.Scheme); err != nil {
+				t.Errorf("ProxyReconciler.Reconcile() error = %v", err)
+			}
 			if err := v1alpha1.AddToScheme(scheme.Scheme); err != nil {
 				t.Errorf("ProxyReconciler.Reconcile() error = %v", err)
 			}
+
 			cm := &corev1.ConfigMap{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      config.ProxyConfigMapName,

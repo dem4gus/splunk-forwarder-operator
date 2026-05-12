@@ -130,35 +130,35 @@ func schema_openshift_splunk_forwarder_operator_api_v1alpha1_SplunkForwarderSpec
 					},
 					"useHeavyForwarder": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Whether an additional Splunk Heavy Forwarder should be deployed. Optional: Defaults to false.",
+							Description: "Whether an additional Splunk Heavy Forwarder should be deployed. Optional: Defaults to false. NOTE: This field is currently not implemented by the operator.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
 					"heavyForwarderImage": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Container image path to the Splunk Heavy Forwarder image. Required when UseHeavyForwarder is true.",
+							Description: "Container image path to the Splunk Heavy Forwarder image. Required when UseHeavyForwarder is true. NOTE: This field is currently not implemented by the operator.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"heavyForwarderDigest": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Container image digest of the container image defined in HeavyForwarderImage. Optional: Defaults to latest",
+							Description: "Container image digest of the container image defined in HeavyForwarderImage. Optional: Defaults to latest NOTE: This field is currently not implemented by the operator.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"heavyForwarderReplicas": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Number of desired Splunk Heavy Forwarder pods. Optional: Defaults to 2",
+							Description: "Number of desired Splunk Heavy Forwarder pods. Optional: Defaults to 2 NOTE: This field is currently not implemented by the operator.",
 							Type:        []string{"integer"},
 							Format:      "int32",
 						},
 					},
 					"heavyForwarderSelector": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Specifies the value of the NodeSelector for the Splunk Heavy Forwarder pods with key: \"node-role.kubernetes.io\" Optional: Defaults to an empty value.",
+							Description: "Specifies the value of the NodeSelector for the Splunk Heavy Forwarder pods with key: \"node-role.kubernetes.io\" Optional: Defaults to an empty value. NOTE: This field is currently not implemented by the operator.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -173,7 +173,7 @@ func schema_openshift_splunk_forwarder_operator_api_v1alpha1_SplunkForwarderSpec
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "List of additional filters supplied to configure the Splunk Heavy Forwarder Optional: Defaults to no additional filters (no transforms.conf).",
+							Description: "List of additional filters supplied to configure the Splunk Heavy Forwarder Optional: Defaults to no additional filters (no transforms.conf). NOTE: This field is currently not implemented by the operator.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{

@@ -44,22 +44,28 @@ type SplunkForwarderSpec struct {
 	SplunkInputs []SplunkForwarderInputs `json:"splunkInputs"`
 	// Whether an additional Splunk Heavy Forwarder should be deployed.
 	// Optional: Defaults to false.
+	// NOTE: This field is currently not implemented by the operator.
 	UseHeavyForwarder bool `json:"useHeavyForwarder,omitempty"`
 	// Container image path to the Splunk Heavy Forwarder image. Required when
 	// UseHeavyForwarder is true.
+	// NOTE: This field is currently not implemented by the operator.
 	HeavyForwarderImage string `json:"heavyForwarderImage,omitempty"`
 	// Container image digest of the container image defined in HeavyForwarderImage.
 	// Optional: Defaults to latest
+	// NOTE: This field is currently not implemented by the operator.
 	HeavyForwarderDigest string `json:"heavyForwarderDigest,omitempty"`
 	// Number of desired Splunk Heavy Forwarder pods.
 	// Optional: Defaults to 2
+	// NOTE: This field is currently not implemented by the operator.
 	HeavyForwarderReplicas int32 `json:"heavyForwarderReplicas,omitempty"`
 	// Specifies the value of the NodeSelector for the Splunk Heavy Forwarder pods
 	// with key: "node-role.kubernetes.io"
 	// Optional: Defaults to an empty value.
+	// NOTE: This field is currently not implemented by the operator.
 	HeavyForwarderSelector string `json:"heavyForwarderSelector,omitempty"`
 	// List of additional filters supplied to configure the Splunk Heavy Forwarder
 	// Optional: Defaults to no additional filters (no transforms.conf).
+	// NOTE: This field is currently not implemented by the operator.
 	// +listType=map
 	// +listMapKey=name
 	Filters []SplunkFilter `json:"filters,omitempty"`

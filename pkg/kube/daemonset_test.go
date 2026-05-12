@@ -134,7 +134,7 @@ func TestGenerateDaemonSet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			expected := expectedDaemonSet(tt.instance)
 			actual := GenerateDaemonSet(tt.instance, tt.useHECToken)
-			DeepEqualWithDiff(t, expected, actual)
+			deepEqualWithDiff(t, expected, actual)
 		})
 	}
 }

@@ -1,10 +1,10 @@
 package kube
 
 import (
-	"reflect"
 	"testing"
 
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
+	"github.com/openshift/splunk-forwarder-operator/internal/testutil"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -19,7 +19,7 @@ func TestGenerateService(t *testing.T) {
 		want *corev1.Service
 	}{
 		{
-			name: "Testing Service Generation",
+			name: "Generates ClusterIP service with correct port and labels",
 			args: args{
 				instance: &sfv1alpha1.SplunkForwarder{
 					ObjectMeta: metav1.ObjectMeta{
@@ -48,7 +48,7 @@ func TestGenerateService(t *testing.T) {
 					Ports: []corev1.ServicePort{
 						{
 							Protocol: "TCP",
-							Port:     9997,
+							Port:     testutil.SplunkPort,
 						},
 					},
 				},
@@ -57,9 +57,8 @@ func TestGenerateService(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GenerateService(tt.args.instance); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GenerateService() = %v, want %v", got, tt.want)
-			}
+			got := GenerateService(tt.args.instance)
+			testutil.DeepEqualWithDiff(t, tt.want, got)
 		})
 	}
 }

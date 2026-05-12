@@ -1,36 +1,29 @@
 package kube
 
 import (
-	"reflect"
 	"testing"
 
-	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	"github.com/openshift/splunk-forwarder-operator/config"
+	"github.com/openshift/splunk-forwarder-operator/internal/testutil"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestGetVolumeMounts(t *testing.T) {
+	var mountPropagationMode = corev1.MountPropagationHostToContainer
+	testInstance := testutil.NewSplunkForwarderCR().WithImageTag(testutil.ImageTag).Build()
+
 	type args struct {
-		instance    *sfv1alpha1.SplunkForwarder
 		useHECToken bool
 	}
-	var mountPropagationMode = corev1.MountPropagationHostToContainer
 	tests := []struct {
 		name string
 		args args
 		want []corev1.VolumeMount
 	}{
 		{
-			name: "Don't use heaver forwarder",
+			name: "Returns volume mounts for universal forwarder with auth secret",
 			args: args{
-				instance: &sfv1alpha1.SplunkForwarder{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test",
-					},
-					Spec: sfv1alpha1.SplunkForwarderSpec{
-					},
-				},
+				useHECToken: false,
 			},
 			want: []corev1.VolumeMount{
 				{
@@ -66,15 +59,8 @@ func TestGetVolumeMounts(t *testing.T) {
 			},
 		},
 		{
-			name: "Use HEC Token config",
+			name: "Returns volume mounts for HEC token configuration without mTLS auth secret",
 			args: args{
-				instance: &sfv1alpha1.SplunkForwarder{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test",
-					},
-					Spec: sfv1alpha1.SplunkForwarderSpec{
-					},
-				},
 				useHECToken: true,
 			},
 			want: []corev1.VolumeMount{
@@ -105,9 +91,8 @@ func TestGetVolumeMounts(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetVolumeMounts(tt.args.instance, tt.args.useHECToken); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetVolumeMounts() = %v, want %v", got, tt.want)
-			}
+			got := GetVolumeMounts(testInstance, tt.args.useHECToken)
+			testutil.DeepEqualWithDiff(t, tt.want, got)
 		})
 	}
 }

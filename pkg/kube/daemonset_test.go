@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
+	"github.com/openshift/splunk-forwarder-operator/internal/testutil"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,20 +22,28 @@ func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 	expectedIsPrivContainer := true
 	expectedPriorityClassName := "system-node-critical"
 
-	useVolumeSecret := true
 	var sfImage string
 	if instance.Spec.ImageDigest == "" {
-		sfImage = image + ":" + imageTag
+		sfImage = testutil.Image + ":" + testutil.ImageTag
 	} else {
-		sfImage = image + "@" + imageDigest
+		sfImage = testutil.Image + "@" + testutil.ImageDigest
+	}
+
+	// Expected volumes with auth secret (heavy forwarder not implemented)
+	expectedVolumes := []corev1.Volume{
+		testutil.NewConfigMapVolume("osd-monitored-logs-local"),
+		testutil.NewConfigMapVolume("osd-monitored-logs-metadata"),
+		testutil.NewHostPathVolume("splunk-state", testutil.SplunkStatePath),
+		testutil.NewHostPathVolume("host", testutil.HostRootPath),
+		testutil.NewSecretVolume("splunk-auth", "splunk-auth"),
 	}
 
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instanceName + "-ds",
-			Namespace: instanceNamespace,
+			Name:      testutil.InstanceName + "-ds",
+			Namespace: testutil.InstanceNamespace,
 			Labels: map[string]string{
-				"app": instanceName,
+				"app": testutil.InstanceName,
 			},
 			Annotations: map[string]string{
 				"genVersion": "10",
@@ -49,7 +58,7 @@ func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "splunk-forwarder",
-					Namespace: instanceNamespace,
+					Namespace: testutil.InstanceNamespace,
 					Labels: map[string]string{
 						"name": "splunk-forwarder",
 					},
@@ -105,7 +114,7 @@ func expectedDaemonSet(instance *sfv1alpha1.SplunkForwarder) *appsv1.DaemonSet {
 							},
 						},
 					},
-					Volumes: GetVolumes(true, useVolumeSecret, false, instanceName),
+					Volumes: expectedVolumes,
 				},
 			},
 		},
@@ -119,22 +128,28 @@ func TestGenerateDaemonSet(t *testing.T) {
 		useHECToken bool
 	}{
 		// TODO: The following configurations should be invalid and produce a predictable error:
-		// - splunkForwarderInstance(false, false)
+		// - NewSplunkForwarderCR() with neither tag nor digest
 		//   (Can't make sf pull spec when neither tag nor digest is present.)
 		{
-			name:     "Test Daemonset with image digest",
-			instance: splunkForwarderInstance(true),
+			name: "Generates DaemonSet using image digest when ImageDigest is specified",
+			instance: testutil.NewSplunkForwarderCR().
+				WithImageDigest(testutil.ImageDigest).
+				WithGeneration(10).
+				Build(),
 		},
 		{
-			name:     "Test Daemonset with tags",
-			instance: splunkForwarderInstance(false),
+			name: "Generates DaemonSet using image tag when ImageTag is specified",
+			instance: testutil.NewSplunkForwarderCR().
+				WithImageTag(testutil.ImageTag).
+				WithGeneration(10).
+				Build(),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			expected := expectedDaemonSet(tt.instance)
 			actual := GenerateDaemonSet(tt.instance, tt.useHECToken)
-			deepEqualWithDiff(t, expected, actual)
+			testutil.DeepEqualWithDiff(t, expected, actual)
 		})
 	}
 }

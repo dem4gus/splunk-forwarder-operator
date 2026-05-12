@@ -4,89 +4,16 @@ import (
 	"context"
 	"reflect"
 	"testing"
-	"time"
 
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	"github.com/openshift/splunk-forwarder-operator/config"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/openshift/splunk-forwarder-operator/internal/testutil"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	fakekubeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
-
-const (
-	instanceName      = "test"
-	instanceNamespace = "openshift-test"
-	image             = "test-image"
-	imageTag          = "0.0.1"
-)
-
-func testSplunkForwarderCR() *sfv1alpha1.SplunkForwarder {
-	ret := &sfv1alpha1.SplunkForwarder{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "SplunkForwarder",
-			APIVersion: "splunkforwarder.managed.openshift.io/v1alpha1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      instanceName,
-			Namespace: instanceNamespace,
-		},
-		Spec: sfv1alpha1.SplunkForwarderSpec{
-			SplunkLicenseAccepted: true,
-			Image:                 image,
-			ImageTag:              imageTag,
-			SplunkInputs: []sfv1alpha1.SplunkForwarderInputs{
-				{
-					Path: "/var/log/test",
-				},
-			},
-		},
-	}
-	return ret
-}
-
-func testSplunkForwarderSecret() *corev1.Secret {
-	ret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      config.SplunkAuthSecretName,
-			Namespace: instanceNamespace,
-			CreationTimestamp: metav1.Time{
-				Time: time.Now(),
-			},
-		},
-	}
-	return ret
-}
-
-func testSplunkForwarderHECSecret() *corev1.Secret {
-	ret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      config.SplunkHECTokenSecretName,
-			Namespace: instanceNamespace,
-			CreationTimestamp: metav1.Time{
-				Time: time.Now(),
-			},
-		},
-	}
-	return ret
-}
-
-func testSplunkForwarderDS() *appsv1.DaemonSet {
-	ret := &appsv1.DaemonSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      instanceName + "-ds",
-			Namespace: instanceNamespace,
-			CreationTimestamp: metav1.Time{
-				Time: time.Date(2019, 12, 01, 12, 12, 0, 0, time.UTC),
-			},
-		},
-	}
-	return ret
-}
 
 func TestReconcileSecret_Reconcile(t *testing.T) {
 	if err := sfv1alpha1.AddToScheme(scheme.Scheme); err != nil {
@@ -104,7 +31,7 @@ func TestReconcileSecret_Reconcile(t *testing.T) {
 		localObjects []runtime.Object
 	}{
 		{
-			name: "No CRD",
+			name: "Reconcile succeeds when SplunkForwarder CRD is not found",
 			args: args{
 				request: reconcile.Request{},
 			},
@@ -113,73 +40,73 @@ func TestReconcileSecret_Reconcile(t *testing.T) {
 			localObjects: []runtime.Object{},
 		},
 		{
-			name: "No secret",
+			name: "Reconcile succeeds when splunk-auth secret is missing",
 			args: args{
 				request: reconcile.Request{
 					NamespacedName: types.NamespacedName{
 						Name:      config.SplunkAuthSecretName,
-						Namespace: instanceNamespace,
+						Namespace: testutil.InstanceNamespace,
 					},
 				},
 			},
 			want:    reconcile.Result{},
 			wantErr: false,
 			localObjects: []runtime.Object{
-				testSplunkForwarderCR(),
+				testutil.NewSplunkForwarderCR().Build(),
 			},
 		},
 		{
-			name: "No daemonset",
+			name: "Reconcile succeeds when DaemonSet does not exist yet",
 			args: args{
 				request: reconcile.Request{
 					NamespacedName: types.NamespacedName{
 						Name:      config.SplunkAuthSecretName,
-						Namespace: instanceNamespace,
+						Namespace: testutil.InstanceNamespace,
 					},
 				},
 			},
 			want:    reconcile.Result{},
 			wantErr: false,
 			localObjects: []runtime.Object{
-				testSplunkForwarderCR(),
-				testSplunkForwarderSecret(),
+				testutil.NewSplunkForwarderCR().Build(),
+				testutil.NewSplunkAuthSecret(),
 			},
 		},
 		{
-			name: "Daemonset Timestamp",
+			name: "Reconcile updates DaemonSet restart timestamp when secret changes",
 			args: args{
 				request: reconcile.Request{
 					NamespacedName: types.NamespacedName{
 						Name:      config.SplunkAuthSecretName,
-						Namespace: instanceNamespace,
+						Namespace: testutil.InstanceNamespace,
 					},
 				},
 			},
 			want:    reconcile.Result{},
 			wantErr: false,
 			localObjects: []runtime.Object{
-				testSplunkForwarderCR(),
-				testSplunkForwarderSecret(),
-				testSplunkForwarderDS(),
+				testutil.NewSplunkForwarderCR().Build(),
+				testutil.NewSplunkAuthSecret(),
+				testutil.NewSplunkForwarderDaemonSet(),
 			},
 		},
 		{
-			name: "HEC Secret",
+			name: "Reconcile updates DaemonSet timestamp when HEC secret is present",
 			args: args{
 				request: reconcile.Request{
 					NamespacedName: types.NamespacedName{
 						Name:      config.SplunkAuthSecretName,
-						Namespace: instanceNamespace,
+						Namespace: testutil.InstanceNamespace,
 					},
 				},
 			},
 			want:    reconcile.Result{},
 			wantErr: false,
 			localObjects: []runtime.Object{
-				testSplunkForwarderCR(),
-				testSplunkForwarderSecret(),
-				testSplunkForwarderDS(),
-				testSplunkForwarderHECSecret(),
+				testutil.NewSplunkForwarderCR().Build(),
+				testutil.NewSplunkAuthSecret(),
+				testutil.NewSplunkForwarderDaemonSet(),
+				testutil.NewSplunkHECSecret(),
 			},
 		},
 	}

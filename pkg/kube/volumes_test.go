@@ -1,16 +1,14 @@
 package kube
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/openshift/splunk-forwarder-operator/config"
+	"github.com/openshift/splunk-forwarder-operator/internal/testutil"
 	corev1 "k8s.io/api/core/v1"
 )
 
 func TestGetVolumes(t *testing.T) {
-	var hostPathDirectoryTypeForPtr = corev1.HostPathDirectory
-
 	type args struct {
 		mountHost     bool
 		mountSecret   bool
@@ -23,290 +21,79 @@ func TestGetVolumes(t *testing.T) {
 		want []corev1.Volume
 	}{
 		{
-			name: "Host-true secret-false",
+			name: "Returns volumes with host mount and without secret",
 			args: args{
 				mountHost:    true,
 				mountSecret:  false,
-				instanceName: "test",
+				instanceName: testutil.InstanceName,
 			},
 			want: []corev1.Volume{
-				{
-					Name: "osd-monitored-logs-local",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "osd-monitored-logs-local",
-							},
-						},
-					},
-				},
-				{
-					Name: "osd-monitored-logs-metadata",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "osd-monitored-logs-metadata",
-							},
-						},
-					},
-				},
-				{
-					Name: "splunk-state",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/var/lib/misc",
-							Type: &hostPathDirectoryTypeForPtr,
-						},
-					},
-				},
-				{
-					Name: "host",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/",
-							Type: &hostPathDirectoryTypeForPtr,
-						},
-					},
-				},
-				{
-					Name: "test-internalsplunk",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "test-internalsplunk",
-							},
-						},
-					},
-				},
+				testutil.NewConfigMapVolume("osd-monitored-logs-local"),
+				testutil.NewConfigMapVolume("osd-monitored-logs-metadata"),
+				testutil.NewHostPathVolume("splunk-state", testutil.SplunkStatePath),
+				testutil.NewHostPathVolume("host", testutil.HostRootPath),
+				testutil.NewConfigMapVolume(testutil.InstanceName + "-internalsplunk"),
 			},
 		},
 		{
-			name: "Host-true secret-true",
+			name: "Returns volumes with both host mount and auth secret",
 			args: args{
 				mountHost:    true,
 				mountSecret:  true,
-				instanceName: "test",
+				instanceName: testutil.InstanceName,
 			},
 			want: []corev1.Volume{
-				{
-					Name: "osd-monitored-logs-local",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "osd-monitored-logs-local",
-							},
-						},
-					},
-				},
-				{
-					Name: "osd-monitored-logs-metadata",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "osd-monitored-logs-metadata",
-							},
-						},
-					},
-				},
-				{
-					Name: "splunk-state",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/var/lib/misc",
-							Type: &hostPathDirectoryTypeForPtr,
-						},
-					},
-				},
-				{
-					Name: "host",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/",
-							Type: &hostPathDirectoryTypeForPtr,
-						},
-					},
-				},
-				{
-					Name: config.SplunkAuthSecretName,
-					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							SecretName: config.SplunkAuthSecretName,
-						},
-					},
-				},
+				testutil.NewConfigMapVolume("osd-monitored-logs-local"),
+				testutil.NewConfigMapVolume("osd-monitored-logs-metadata"),
+				testutil.NewHostPathVolume("splunk-state", testutil.SplunkStatePath),
+				testutil.NewHostPathVolume("host", testutil.HostRootPath),
+				testutil.NewSecretVolume(config.SplunkAuthSecretName, config.SplunkAuthSecretName),
 			},
 		},
 		{
-			name: "Host-false secret-false",
+			name: "Returns volumes without host mount or secret",
 			args: args{
 				mountHost:    false,
 				mountSecret:  false,
-				instanceName: "test",
+				instanceName: testutil.InstanceName,
 			},
 			want: []corev1.Volume{
-				{
-					Name: "osd-monitored-logs-local",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "osd-monitored-logs-local",
-							},
-						},
-					},
-				},
-				{
-					Name: "osd-monitored-logs-metadata",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "osd-monitored-logs-metadata",
-							},
-						},
-					},
-				},
-				{
-					Name: "splunk-state",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/var/lib/misc",
-							Type: &hostPathDirectoryTypeForPtr,
-						},
-					},
-				},
-				{
-					Name: "test-hfconfig",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "test-hfconfig",
-							},
-						},
-					},
-				},
-				{
-					Name: "test-internalsplunk",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "test-internalsplunk",
-							},
-						},
-					},
-				},
+				testutil.NewConfigMapVolume("osd-monitored-logs-local"),
+				testutil.NewConfigMapVolume("osd-monitored-logs-metadata"),
+				testutil.NewHostPathVolume("splunk-state", testutil.SplunkStatePath),
+				testutil.NewConfigMapVolume(testutil.InstanceName + "-hfconfig"),
+				testutil.NewConfigMapVolume(testutil.InstanceName + "-internalsplunk"),
 			},
 		},
 		{
-			name: "Host-false secret-true",
+			name: "Returns volumes with secret but without host mount",
 			args: args{
 				mountHost:    false,
 				mountSecret:  true,
-				instanceName: "test",
+				instanceName: testutil.InstanceName,
 			},
 			want: []corev1.Volume{
-				{
-					Name: "osd-monitored-logs-local",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "osd-monitored-logs-local",
-							},
-						},
-					},
-				},
-				{
-					Name: "osd-monitored-logs-metadata",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "osd-monitored-logs-metadata",
-							},
-						},
-					},
-				},
-				{
-					Name: "splunk-state",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/var/lib/misc",
-							Type: &hostPathDirectoryTypeForPtr,
-						},
-					},
-				},
-				{
-					Name: "test-hfconfig",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "test-hfconfig",
-							},
-						},
-					},
-				},
-				{
-					Name: config.SplunkAuthSecretName,
-					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							SecretName: config.SplunkAuthSecretName,
-						},
-					},
-				},
+				testutil.NewConfigMapVolume("osd-monitored-logs-local"),
+				testutil.NewConfigMapVolume("osd-monitored-logs-metadata"),
+				testutil.NewHostPathVolume("splunk-state", testutil.SplunkStatePath),
+				testutil.NewConfigMapVolume(testutil.InstanceName + "-hfconfig"),
+				testutil.NewSecretVolume(config.SplunkAuthSecretName, config.SplunkAuthSecretName),
 			},
 		},
 		{
-			name: "HEC token supersedes old secret",
+			name: "Returns HEC token volume configuration when token secret is enabled",
 			args: args{
 				mountHost:     true,
 				mountSecret:   true,
 				mountHECToken: true,
-				instanceName:  "test",
+				instanceName:  testutil.InstanceName,
 			},
 			want: []corev1.Volume{
-				{
-					Name: "osd-monitored-logs-local",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "osd-monitored-logs-local",
-							},
-						},
-					},
-				},
-				{
-					Name: "osd-monitored-logs-metadata",
-					VolumeSource: corev1.VolumeSource{
-						ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "osd-monitored-logs-metadata",
-							},
-						},
-					},
-				},
-				{
-					Name: "splunk-state",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/var/lib/misc",
-							Type: &hostPathDirectoryTypeForPtr,
-						},
-					},
-				},
-				{
-					Name: "host",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/",
-							Type: &hostPathDirectoryTypeForPtr,
-						},
-					},
-				},
-				{
-					Name: config.SplunkHECTokenSecretName,
-					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							SecretName: config.SplunkHECTokenSecretName,
-						},
-					},
-				},
+				testutil.NewConfigMapVolume("osd-monitored-logs-local"),
+				testutil.NewConfigMapVolume("osd-monitored-logs-metadata"),
+				testutil.NewHostPathVolume("splunk-state", testutil.SplunkStatePath),
+				testutil.NewHostPathVolume("host", testutil.HostRootPath),
+				testutil.NewSecretVolume(config.SplunkHECTokenSecretName, config.SplunkHECTokenSecretName),
 				{
 					Name: "splunk-config",
 					VolumeSource: corev1.VolumeSource{
@@ -318,9 +105,8 @@ func TestGetVolumes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetVolumes(tt.args.mountHost, tt.args.mountSecret, tt.args.mountHECToken, tt.args.instanceName); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetVolumes() = %v, want %v", got, tt.want)
-			}
+			got := GetVolumes(tt.args.mountHost, tt.args.mountSecret, tt.args.mountHECToken, tt.args.instanceName)
+			testutil.DeepEqualWithDiff(t, tt.want, got)
 		})
 	}
 }
